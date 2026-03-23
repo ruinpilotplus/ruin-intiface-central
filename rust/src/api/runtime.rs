@@ -143,7 +143,7 @@ pub fn run_engine(sink: StreamSink<String>, args: EngineOptionsExternal) -> Resu
       // participate in the join below.  The server runs until the runtime
       // is dropped (via shutdown_background in stop_engine), at which
       // point tokio aborts the task automatically.
-      tokio::spawn(async move {
+      let _webhook_handle = tokio::spawn(async move {
         info!("Starting webhook server on port {}", crate::webhook_server::WEBHOOK_PORT);
         crate::webhook_server::run_webhook_server().await;
         info!("Webhook server exited");

@@ -127,7 +127,11 @@ class WebhookServerCubit extends Cubit<WebhookServerState> {
       final statusJson =
           jsonDecode(statusBody) as Map<String, dynamic>;
 
-      final mobileIp = _mobileIp ?? '127.0.0.1';
+      // Prefer the actual WiFi IP; fall back to loopback only when no
+      // network interface is available.
+      final mobileIp = (_mobileIp != null && _mobileIp!.isNotEmpty)
+          ? _mobileIp!
+          : '127.0.0.1';
       final sessions = await _fetchSessions(baseUrl, client);
 
       emit(WebhookServerRunning(
@@ -139,11 +143,15 @@ class WebhookServerCubit extends Cubit<WebhookServerState> {
       ));
 
       client.close();
-    } catch (_) {
-      // Connection refused means engine/webhook not up yet
+    } on SocketException catch (_) {
+      // Connection refused – webhook server not yet reachable
       if (state is! WebhookServerStarting) {
         emit(WebhookServerStarting());
       }
+    } catch (e) {
+      // Unexpected error – log and stay in current state
+      // ignore: avoid_print
+      print('WebhookServerCubit: unexpected poll error: $e');
     }
   }
 

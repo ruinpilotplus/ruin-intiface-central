@@ -15,7 +15,7 @@
 //! 3. On success the server returns a `pairing_token` that the web app
 //!    includes in every subsequent request.
 
-use std::{collections::HashMap, sync::Arc, time::{SystemTime, UNIX_EPOCH}};
+use std::{collections::HashMap, sync::Arc};
 
 use axum::{
     extract::{Path, State},
@@ -357,8 +357,11 @@ async fn disconnect_device(
     Path(device_id): Path<String>,
     State(state): State<Arc<WebhookAppState>>,
 ) -> StatusCode {
-    // Stopping all commands is the closest approximation to "disconnect"
-    // without direct server-side device management.
+    // The Buttplug in-process backend does not expose a public API to
+    // forcefully disconnect individual devices.  Stopping all active commands
+    // (StopDeviceCmd) is the closest safe approximation.  Physical
+    // disconnection of the device itself must be performed by the user or by
+    // the engine's own timeout logic.
     stop_device(headers, Path(device_id), State(state)).await
 }
 
@@ -493,6 +496,12 @@ fn session_to_info(s: &Session) -> SessionInfo {
 
 /// Start the webhook HTTP server.  This future runs indefinitely; drop the
 /// runtime (or send a shutdown signal) to stop it.
+///
+/// # CORS
+/// The server permits any origin so that the React web application can reach
+/// it from any domain on the same LAN.  The pairing-token bearer
+/// authentication provides the actual access control; open CORS headers alone
+/// do not grant access to any operation.
 pub async fn run_webhook_server() {
     let state = WEBHOOK_APP_STATE.clone();
 

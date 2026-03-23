@@ -213,7 +213,7 @@ class _PairingPageState extends State<PairingPage> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Session: ${session.sessionId.substring(0, 8)}…'),
+            Text(_truncateSessionId(session.sessionId)),
             if (session.reactWebhookUrl != null)
               Text(
                 'Webhook: ${session.reactWebhookUrl}',
@@ -264,5 +264,13 @@ class _PairingPageState extends State<PairingPage> {
         content: Text(success ? 'Session revoked.' : 'Failed to revoke session.'),
       ),
     );
+  }
+
+  String _truncateSessionId(String sessionId) {
+    const prefix = 'Session: ';
+    if (sessionId.length > 8) {
+      return '$prefix${sessionId.substring(0, 8)}…';
+    }
+    return '$prefix$sessionId';
   }
 }
