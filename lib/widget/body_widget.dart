@@ -10,6 +10,7 @@ import 'package:intiface_central/page/app_control_page.dart';
 import 'package:intiface_central/page/log_page.dart';
 import 'package:intiface_central/bloc/util/navigation_cubit.dart';
 import 'package:intiface_central/page/submit_logs_page.dart';
+import 'package:intiface_central/page/pairing/pairing_page.dart';
 import 'package:intiface_central/widget/news_card_widget.dart';
 import 'package:intiface_central/page/device_page.dart';
 import 'package:intiface_central/page/settings_page.dart';
@@ -78,6 +79,16 @@ class BodyWidget extends StatelessWidget {
         const Icon(Icons.vibration),
         'Devices',
         () => const DevicePage(),
+        true,
+        true,
+      ),
+      NavigationDestination(
+        (state) => state == NavigationPage.pairing,
+        (NavigationCubit cubit) => cubit.goPairing(),
+        const Icon(Icons.qr_code_outlined),
+        const Icon(Icons.qr_code),
+        'Pairing',
+        () => const PairingPage(),
         true,
         true,
       ),

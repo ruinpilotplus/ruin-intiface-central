@@ -139,6 +139,16 @@ pub fn run_engine(sink: StreamSink<String>, args: EngineOptionsExternal) -> Resu
     async move {
       info!("Entering main join.");
 
+      // Spawn the webhook server as an independent task so it does NOT
+      // participate in the join below.  The server runs until the runtime
+      // is dropped (via shutdown_background in stop_engine), at which
+      // point tokio aborts the task automatically.
+      tokio::spawn(async move {
+        info!("Starting webhook server on port {}", crate::webhook_server::WEBHOOK_PORT);
+        crate::webhook_server::run_webhook_server().await;
+        info!("Webhook server exited");
+      });
+
       tokio::join!(
         // Backdoor server task
         async move {
@@ -177,6 +187,8 @@ pub fn run_engine(sink: StreamSink<String>, args: EngineOptionsExternal) -> Resu
               outgoing = backdoor_server_stream.next() => {
                 match outgoing {
                   Some(msg) => {
+                    // Update webhook device state from Buttplug protocol messages
+                    crate::webhook_server::update_device_state_from_message(&msg);
                     // Check shutdown flag before sending to avoid SendError
                     if !ENGINE_SHUTDOWN.load(Ordering::SeqCst) {
                       let _ = sink.add(msg);
@@ -210,6 +222,8 @@ pub fn run_engine(sink: StreamSink<String>, args: EngineOptionsExternal) -> Resu
           engine_clone_clone.stop();
         }
       );
+      // Clean up webhook device state so a fresh run starts empty.
+      crate::webhook_server::clear_device_state();
       // Set shutdown flag to prevent any more sink messages from being sent.
       // This is critical for preventing SendError when engine completes naturally.
       ENGINE_SHUTDOWN.store(true, Ordering::SeqCst);
@@ -304,5 +318,16 @@ pub fn send_backend_server_message(msg: String) {
     BACKDOOR_INCOMING_BROADCASTER
       .send(msg)
       .expect("This should be infallible since we already checked for receivers");
+  }
+}
+
+/// Send a Buttplug protocol JSON message via the backdoor broadcaster.
+/// Used by the webhook server to forward device commands from the React
+/// web application to the running Buttplug engine.
+pub fn webhook_send_backdoor_message(msg: String) {
+  if BACKDOOR_INCOMING_BROADCASTER.receiver_count() > 0 {
+    if let Err(e) = BACKDOOR_INCOMING_BROADCASTER.send(msg) {
+      log::warn!("Webhook: failed to send backdoor message: {:?}", e);
+    }
   }
 }

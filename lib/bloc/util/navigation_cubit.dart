@@ -10,6 +10,7 @@ enum NavigationPage {
   about,
   help,
   sendLogs,
+  pairing,
   exit,
 }
 
@@ -24,5 +25,6 @@ class NavigationCubit extends Cubit<NavigationPage> {
   void goLogs() => emit(NavigationPage.logs);
   void goAbout() => emit(NavigationPage.about);
   void goSendLogs() => emit(NavigationPage.sendLogs);
+  void goPairing() => emit(NavigationPage.pairing);
   void goExit() => emit(NavigationPage.exit);
 }

@@ -21,7 +21,7 @@ intiface-engine = { version = "4.0.0", path = "../../buttplug/crates/intiface_en
 log = "0.4.27"
 lazy_static = "1.5.0"
 once_cell = "1.21.3"
-tokio = { version = "1.45.1", features = ["rt", "tracing"] }
+tokio = { version = "1.45.1", features = ["rt", "rt-multi-thread", "net", "macros", "tracing", "sync", "time"] }
 anyhow = "1.0.98"
 # THIS VERSION ABSOLUTELY, POSITIVELY MUST MATCH WHATEVER BUTTPLUG LINKS, OTHERWISE THERE WILL BE
 # STATIC MISALIGNMENT AND YOU DO NOT WANT TO SPEND ANOTHER 3 DAYS DEBUGGING THAT.
@@ -29,7 +29,7 @@ anyhow = "1.0.98"
 btleplug = { version = "0.12" }
 thiserror = "2.0.12"
 getset = "0.1.6"
-serde = "1.0.219"
+serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
 async-trait = "0.1.88"
 futures = "0.3.31"
@@ -41,6 +41,13 @@ sentry = { version = "0.41.0", default-features = false, features = ["backtrace"
 crossbeam-channel = "0.5.15"
 parking_lot = "0.12"
 uuid = "1.17.0"
+# Webhook server dependencies
+axum = { version = "0.8", features = ["json", "macros"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+jsonwebtoken = "9"
+base64 = "0.22"
 
 [target.'cfg(target_os = "android")'.dependencies]
 # THESE VERSIONS ABSOLUTELY, POSITIVELY MUST MATCH WHATEVER BUTTPLUG LINKS, OTHERWISE THERE WILL BE

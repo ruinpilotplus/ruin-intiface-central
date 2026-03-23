@@ -25,6 +25,7 @@ import 'package:intiface_central/bloc/util/error_notifier_cubit.dart';
 import 'package:intiface_central/bloc/util/gui_settings_cubit.dart';
 import 'package:intiface_central/bloc/util/navigation_cubit.dart';
 import 'package:intiface_central/bloc/util/network_info_cubit.dart';
+import 'package:intiface_central/bloc/webhook_server/webhook_server_cubit.dart';
 import 'package:intiface_central/util/bluetooth_check.dart';
 import 'package:intiface_central/util/intiface_util.dart';
 import 'package:intiface_central/util/logging.dart';
@@ -327,6 +328,7 @@ class IntifaceCentralApp extends StatelessWidget with WindowListener, TrayListen
     configCubit.currentDeviceConfigVersion = deviceConfigVersion;
 
     var networkCubit = await NetworkInfoCubit.create();
+    var webhookServerCubit = WebhookServerCubit.create(networkCubit);
 
     EngineRepository engineRepo;
     if (isDesktop()) {
@@ -458,12 +460,14 @@ class IntifaceCentralApp extends StatelessWidget with WindowListener, TrayListen
         if (isDesktop() && configCubit.useDiscordRichPresence) {
           discordBloc.add(DiscordEngineStartedEvent());
         }
+        webhookServerCubit.onEngineStarted();
       }
       if (state is EngineStoppedState) {
         deviceControlBloc.add(DeviceManagerEngineStoppedEvent());
         if (isDesktop() && configCubit.useDiscordRichPresence) {
           discordBloc.add(DiscordEngineStoppedEvent());
         }
+        webhookServerCubit.onEngineStopped();
       }
       if (state is DeviceConnectedState) {
         logInfo("Updating device ${state.name} index to ${state.index}");
@@ -526,6 +530,7 @@ class IntifaceCentralApp extends StatelessWidget with WindowListener, TrayListen
         BlocProvider(create: (context) => errorNotifierCubit),
         BlocProvider(create: (context) => userConfigCubit),
         BlocProvider(create: (context) => guiSettingsCubit),
+        BlocProvider(create: (context) => webhookServerCubit),
         // Discord RPC won't work on mobile
         if (isDesktop()) BlocProvider(create: (context) => discordBloc),
       ],
